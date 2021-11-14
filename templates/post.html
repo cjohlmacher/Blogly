@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Post{% endblock %}
+
+{% block content %}
+    <div>
+        <h1>{{post.title}}</h1>
+    </div>
+    <div>
+        <p>{{post.content}}</p>
+    </div>
+    <p>By {{post.created_by.get_full_name()}}</p>
+    <div class="selection-bar">
+        <a class="button" href="/users/{{post.creator}}">Back</a>
+        <a class="button confirm" href="/posts/{{post.id}}/edit">Edit</a>
+        <a class="button reject" href="/posts/{{post.id}}/delete">Delete</a>
+    </div>
+
+{% endblock %}

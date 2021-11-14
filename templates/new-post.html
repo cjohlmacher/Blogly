@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}New Post{% endblock %}
+
+{% block content %}
+    <h1>Add Post for {{user.first_name}} {{user.last_name}}</h1>
+    <form action="/users/{{user.id}}/posts/new" method="POST">
+        <div class="form-element">
+            <label>Title</label>
+            <input type="text" name="title" />
+        </div>
+        <div class="form-element">
+            <label>Content</label>
+            <textarea name="content" rows="5"></textarea>
+        </div>
+        <div class="selection-bar">
+            <a class="button" href="/users/{{user.id}}">Cancel</a>
+            <button class="confirm" type="submit">Add</button>
+        </div>
+    </form>
+{% endblock %}

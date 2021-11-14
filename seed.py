@@ -1,4 +1,4 @@
-from models import User, db
+from models import User, Post, db
 from app import app
 
 #Create all tables
@@ -7,6 +7,7 @@ db.create_all()
 
 #Empty table
 User.query.delete()
+Post.query.delete()
 
 #Add users
 user_1 = User(first_name="Alan", last_name="Alda")
