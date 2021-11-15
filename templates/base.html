@@ -8,7 +8,11 @@
     <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-    <a href="/users">Home</a>
+    <nav>
+        <a href="/users">Users</a>
+        <!-- <a href="/posts">Posts</a> -->
+        <a href="/tags">Tags</a>
+    </nav>
     {% block content %}
     {% endblock %}
 </body>

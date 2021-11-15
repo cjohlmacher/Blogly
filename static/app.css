@@ -61,6 +61,16 @@ button.confirm, .button.confirm {
 .selection-bar {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.tag {
+    background-color: rgb(102, 145, 201);
+    color: white;
+    border-radius: 3px;
+    margin: 5px;
+    padding: 5px;
 }
 
 img {

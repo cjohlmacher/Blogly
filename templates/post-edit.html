@@ -13,6 +13,17 @@
             <label>Content</label>
             <textarea name="content" rows="5">{{post.content}}</textarea>
         </div>
+        <div class="form-element">
+            <select name="tags" multiple="5">
+                {% for tag in tags %}
+                    {% if tag in post.post_tags %}
+                        <option value="{{tag.name}}" selected>{{tag.name}}</option>
+                    {% else %}
+                        <option value="{{tag.name}}">{{tag.name}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
         <div class="selection-bar">
             <a class="button" href="/posts/{{post.id}}">Cancel</a>
             <button class="confirm" type="submit">Edit</button>

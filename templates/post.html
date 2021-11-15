@@ -10,6 +10,15 @@
         <p>{{post.content}}</p>
     </div>
     <p>By {{post.created_by.get_full_name()}}</p>
+    <p>Created {{post.display_date()}}</p>
+    <div class="selection-bar">
+        <h3>Tags:</h3>
+        {% for tag in post.post_tags %}
+            <div class="tag">
+                {{tag.name}}
+            </div>
+        {% endfor %}
+    </div>
     <div class="selection-bar">
         <a class="button" href="/users/{{post.creator}}">Back</a>
         <a class="button confirm" href="/posts/{{post.id}}/edit">Edit</a>

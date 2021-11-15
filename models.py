@@ -35,7 +35,7 @@ class User(db.Model):
 
     def __repr__(self):
         user = self
-        return f"<User id={user.id} first_name={user.first_name} last_name={user.last_name} img_url={user.img_url}"
+        return f"<User id={user.id} first_name={user.first_name} last_name={user.last_name} img_url={user.img_url}>"
     
     def get_full_name(self):
         user = self
@@ -61,4 +61,27 @@ class Post(db.Model):
         post = self
         return f"<Post id={post.id} title={post.title} content={post.content} creator={post.creator}>"
     
+    def display_date(self):
+        return f"{str(self.created_at)[0:-10]}"
+
+    post_tags = db.relationship('Tag', secondary='post_tag', backref="tagged_posts")
     
+class Tag(db.Model):
+    """ Tags class """
+
+    __tablename__ = 'tags'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.Text, unique=True, nullable=False)
+
+    def __repr__(self):
+        tag = self
+        return f"<Tag id={tag.id} name={tag.name}>"
+
+class Post_Tag(db.Model):
+    """ Relation between posts and tags """
+
+    __tablename__ = 'post_tag'
+
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), primary_key=True)
+    tag_id = db.Column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)

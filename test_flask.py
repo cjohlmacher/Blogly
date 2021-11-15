@@ -1,7 +1,8 @@
 from unittest import TestCase
+from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 
 from app import app
-from models import db, User, Post
+from models import db, User, Post, Tag, Post_Tag
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test'
 app.config['SQLALCHEMY_ECHO'] = False
@@ -19,11 +20,24 @@ class UserViewsTestCase(TestCase):
     def setUp(self):
         """ Add sample users """
 
-        User.query.delete()
+        all_users = User.query.all()
+        for test_user in all_users:
+            db.session.delete(test_user)
         user_1 = User(first_name="Samantha", last_name="Wright", img_url="https://images.pexels.com/photos/9794338/pexels-photo-9794338.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260")
         user_2 = User(first_name="Avery", last_name="Lenox")
         db.session.add(user_1)
         db.session.add(user_2)
+        db.session.commit()
+
+        all_posts = Post.query.all()
+        for test_post in all_posts:
+            db.session.delete(test_post)
+        post_1 = Post(title="Hello, world!", content="This is a post.", creator=user_1.id)
+        post_2 = Post(title="Test Post", content="A test", creator=user_2.id)
+        post_3 = Post(title="Second Post for User 1", content="User 1's second post.", creator=user_1.id)
+        db.session.add(post_1)
+        db.session.add(post_2)
+        db.session.add(post_3)
         db.session.commit()
     
     def tearDown(self):
@@ -87,14 +101,18 @@ class PostViewsTestCase(TestCase):
     def setUp(self):
         """ Add sample users and posts """
 
-        User.query.delete()
+        all_users = User.query.all()
+        for test_user in all_users:
+            db.session.delete(test_user)
         user_1 = User(first_name="Samantha", last_name="Wright", img_url="https://images.pexels.com/photos/9794338/pexels-photo-9794338.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260")
         user_2 = User(first_name="Avery", last_name="Lenox")
         db.session.add(user_1)
         db.session.add(user_2)
         db.session.commit()
 
-        Post.query.delete()
+        all_posts = Post.query.all()
+        for test_post in all_posts:
+            db.session.delete(test_post)
         post_1 = Post(title="Hello, world!", content="This is a post.", creator=user_1.id)
         post_2 = Post(title="Test Post", content="A test", creator=user_2.id)
         post_3 = Post(title="Second Post for User 1", content="User 1's second post.", creator=user_1.id)
@@ -153,3 +171,115 @@ class PostViewsTestCase(TestCase):
             html = resp.get_data(as_text=True)
             self.assertEqual(resp.status_code,200)
             self.assertNotIn("Hello, world!",html)
+
+class TagViewsTestCase(TestCase):
+    """ Test case for Tag views """
+
+    def setUp(self):
+        """ Add sample users, posts, and tags """
+
+        all_users = User.query.all()
+        for test_user in all_users:
+            db.session.delete(test_user)
+        user_1 = User(first_name="Samantha", last_name="Wright", img_url="https://images.pexels.com/photos/9794338/pexels-photo-9794338.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260")
+        user_2 = User(first_name="Avery", last_name="Lenox")
+        db.session.add(user_1)
+        db.session.add(user_2)
+        db.session.commit()
+
+        all_posts = Post.query.all()
+        for test_post in all_posts:
+            db.session.delete(test_post)
+        db.session.commit()
+        post_1 = Post(title="Hello, world!", content="This is a post.", creator=user_1.id)
+        post_2 = Post(title="Test Post", content="A test", creator=user_2.id)
+        post_3 = Post(title="Second Post for User 1", content="User's second post.", creator=user_1.id)
+        db.session.add(post_1)
+        db.session.add(post_2)
+        db.session.add(post_3)
+        db.session.commit()
+
+        all_tags = Tag.query.all()
+        for tag in all_tags:
+            db.session.delete(tag)
+        db.session.commit()
+        tag_1 = Tag(name="Fun")
+        tag_2 = Tag(name="Gardening")
+        tag_3 = Tag(name="Food & Beverage")
+        for tag in [tag_1,tag_2,tag_3]:
+            db.session.add(tag)
+        db.session.commit()
+    
+    def tearDown(self):
+        """ Tear Down """
+
+        db.session.rollback()
+    
+    def test_tags_in_new_post(self):
+        with app.test_client() as client:
+            new_post = MultiDict()
+            new_post.add('title',"My favorite post")
+            new_post.add('content',"This post is great")
+            new_post.add('tags',"Fun")
+            new_post.add('tags',"Gardening")
+            new_post = ImmutableMultiDict(new_post)
+            user = User.query.filter_by(first_name="Avery").one()
+            resp = client.post(f"/users/{user.id}/posts/new", data=new_post, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+        with app.test_client() as client:
+            new_post = Post.query.filter_by(title="My favorite post").first()
+            resp = client.get(f'/posts/{new_post.id}')
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+            self.assertIn("Fun",html)
+            self.assertIn("Gardening",html)
+    
+    def test_tags_in_edit_post(self):
+        with app.test_client() as client:
+            edited_post = MultiDict()
+            edited_post.add('title',"My favorite post")
+            edited_post.add('content',"This post is great")
+            edited_post.add('tags',"Fun")
+            edited_post.add('tags',"Gardening")
+            edited_post = ImmutableMultiDict(edited_post)
+            target_post = Post.query.filter_by(title="Test Post").one()
+            resp = client.post(f"/posts/{target_post.id}/edit", data=edited_post, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+        with app.test_client() as client:
+            target_post = Post.query.filter_by(title="My favorite post").one()
+            resp = client.get(f'/posts/{target_post.id}')
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+            self.assertIn("Fun",html)
+            self.assertIn("Gardening",html)
+    
+    def test_list_tags(self):
+        with app.test_client() as client:
+            resp = client.get(f"/tags")
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+            self.assertIn("Fun",html)
+            self.assertIn("Gardening",html)
+            self.assertIn("Food &amp; Beverage",html)
+
+    def test_edit_tag(self):
+        with app.test_client() as client:
+            tag_to_edit = Tag.query.filter_by(name="Fun").one()
+            edited_tag = {
+                "tag-name": "Adventure",
+            }
+            resp = client.post(f'/tags/{tag_to_edit.id}/edit', data=edited_tag, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+            self.assertIn("Adventure",html)
+            self.assertNotIn("Fun",html)
+
+    def test_delete_tag(self):
+        with app.test_client() as client:
+            tag_to_delete = Tag.query.filter_by(name="Gardening").one()
+            resp = client.get(f'/tags/{tag_to_delete.id}/delete',follow_redirects=True)
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code,200)
+            self.assertNotIn("Gardening",html)
